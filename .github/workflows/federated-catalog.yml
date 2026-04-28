@@ -91,7 +91,7 @@ jobs:
       contents: read
 
     env:
-      FC_WEB_PORT: ${{ vars.FC_WEB_PORT || '26002' }}
+      FC_WEB_PORT: ${{ vars.FC_PORT || '26002' }}
 
     steps:
       - name: Configure SSH
@@ -99,13 +99,13 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p "${FC_WEB_PORT}" -H "${{ secrets.FC_WEB_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${FC_WEB_PORT}" -H "${{ secrets.FC_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Deploy backend FC
         run: |
           SHA_SHORT=$(echo "${GITHUB_SHA}" | cut -c1-7)
 
-          ssh -p "${FC_WEB_PORT}" -i ~/.ssh/deploy_key gh_docker_deploy@${{ secrets.FC_WEB_HOST }} "
+          ssh -p "${FC_WEB_PORT}" -i ~/.ssh/deploy_key gh_docker_deploy@${{ secrets.FC_HOST }} "
             export FC_IMAGE_TAG=${SHA_SHORT} &&
 
             docker pull ghcr.io/wake-ua/federated-catalog:${SHA_SHORT} &&
