@@ -93,7 +93,7 @@ jobs:
       contents: read
 
     env:
-      FC_PORT: ${{ vars.FC_PORT || '26002' }}
+      FC_PORT: ${{ vars.FC_PORT }}
       GHCR_USER: ${{ secrets.GHCR_USER }}
       GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
 
