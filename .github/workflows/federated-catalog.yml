@@ -4,7 +4,6 @@ on:
   push:
     branches:
     - "main"
-    - "feature/deployment"
     paths:
       - 'commons/src/**'
       - 'iam-identity/src/**'
