@@ -20,7 +20,7 @@ services:
       - shared-net
 
   federated-catalog:
-    image: ghcr.io/wake-ua/federated-catalog:${FC_IMAGE_TAG}
+    image: ${FC_IMAGE_REPOSITORY}:${FC_IMAGE_TAG}
     depends_on:
       - fc-mongodb
     ports:

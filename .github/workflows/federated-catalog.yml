@@ -98,12 +98,20 @@ jobs:
       GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Configure SSH
         run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p "${FC_PORT}" -H "${{ secrets.FC_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload stack file
+        run: |
+          ssh -p "${FC_PORT}" -i ~/.ssh/deploy_key gh_docker_deploy@${{ secrets.FC_HOST }} "mkdir -p /home/gh_docker_deploy/despliegue"
+          scp -P "${FC_PORT}" -i ~/.ssh/deploy_key federated-catalog/docker-stack-catalog.yml gh_docker_deploy@${{ secrets.FC_HOST }}:/home/gh_docker_deploy/despliegue/docker-stack-catalog.yml
 
       - name: Deploy backend FC
         run: |
@@ -112,6 +120,7 @@ jobs:
           printf '%s' "${GHCR_TOKEN}" | ssh -p "${FC_PORT}" -i ~/.ssh/deploy_key gh_docker_deploy@${{ secrets.FC_HOST }} "
             docker login ghcr.io -u '${GHCR_USER}' --password-stdin &&
             export FC_IMAGE_TAG=${SHA_SHORT} &&
+            export FC_IMAGE_REPOSITORY=${FC_IMAGE_REPOSITORY} &&
 
             docker pull ${FC_IMAGE_REPOSITORY}:${SHA_SHORT} &&
             docker stack deploy --with-registry-auth -c /home/gh_docker_deploy/despliegue/docker-stack-catalog.yml federated-catalog
