@@ -83,20 +83,31 @@ jobs:
           docker push ${{ steps.vars.outputs.FC_SHA }}
           docker push ${{ steps.vars.outputs.FC_DATE }}
       # ---------------------------------
-#  deploy-fc:
-#    runs-on: self-hosted   # Runner local
-#    needs: build-and-push-fc
-#
-#    steps:
-#      - name: Deploy backend FC
-#        run: |
-#          GITHUB_SHA=${GITHUB_SHA::7}
-#
-#          ssh -i ${{ secrets.DEPLOY_SSH_KEY }} gh_docker_deploy@${{ secrets.FC_WEB_HOST }} "
-#            export FC_IMAGE_TAG=${GITHUB_SHA} &&
-#
-#            docker pull ghcr.io/wake-ua/federated-catalog:${GITHUB_SHA} &&
-#            docker stack deploy -c /home/gh_docker_deploy/despliegue/docker-stack-catalog.yml federated-catalog
-#          "
-#
-#      
+  deploy-fc:
+    runs-on: ubuntu-latest
+    needs: build-and-push-fc
+
+    permissions:
+      contents: read
+
+    env:
+      FC_WEB_PORT: ${{ vars.FC_WEB_PORT || '26002' }}
+
+    steps:
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${FC_WEB_PORT}" -H "${{ secrets.FC_WEB_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy backend FC
+        run: |
+          SHA_SHORT=$(echo "${GITHUB_SHA}" | cut -c1-7)
+
+          ssh -p "${FC_WEB_PORT}" -i ~/.ssh/deploy_key gh_docker_deploy@${{ secrets.FC_WEB_HOST }} "
+            export FC_IMAGE_TAG=${SHA_SHORT} &&
+
+            docker pull ghcr.io/wake-ua/federated-catalog:${SHA_SHORT} &&
+            docker stack deploy -c /home/gh_docker_deploy/despliegue/docker-stack-catalog.yml federated-catalog
+          "
