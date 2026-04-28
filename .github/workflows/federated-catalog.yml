@@ -94,7 +94,7 @@ jobs:
       contents: read
 
     env:
-      FC_WEB_PORT: ${{ vars.FC_PORT }}
+      FC_PORT: ${{ vars.FC_PORT }}
 
     steps:
       - name: Configure SSH
