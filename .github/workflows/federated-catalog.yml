@@ -94,6 +94,7 @@ jobs:
 
     env:
       FC_PORT: ${{ vars.FC_PORT }}
+      FC_DEPLOY_USER: ${{ vars.FC_DEPLOY_USER }}
       GHCR_USER: ${{ secrets.GHCR_USER }}
       GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
 
@@ -110,18 +111,18 @@ jobs:
 
       - name: Upload stack file
         run: |
-          ssh -p "${FC_PORT}" -i ~/.ssh/deploy_key gh_docker_deploy@${{ secrets.FC_HOST }} "mkdir -p /home/gh_docker_deploy/despliegue"
-          scp -P "${FC_PORT}" -i ~/.ssh/deploy_key federated-catalog/docker-stack-catalog.yml gh_docker_deploy@${{ secrets.FC_HOST }}:/home/gh_docker_deploy/despliegue/docker-stack-catalog.yml
+          ssh -p "${FC_PORT}" -i ~/.ssh/deploy_key "${FC_DEPLOY_USER}@${{ secrets.FC_HOST }}" "mkdir -p /home/${FC_DEPLOY_USER}/deploy"
+          scp -P "${FC_PORT}" -i ~/.ssh/deploy_key federated-catalog/docker-stack-catalog.yml "${FC_DEPLOY_USER}@${{ secrets.FC_HOST }}:/home/${FC_DEPLOY_USER}/deploy/docker-stack-catalog.yml"
 
       - name: Deploy backend FC
         run: |
           SHA_SHORT=$(echo "${GITHUB_SHA}" | cut -c1-7)
 
-          printf '%s' "${GHCR_TOKEN}" | ssh -p "${FC_PORT}" -i ~/.ssh/deploy_key gh_docker_deploy@${{ secrets.FC_HOST }} "
+          printf '%s' "${GHCR_TOKEN}" | ssh -p "${FC_PORT}" -i ~/.ssh/deploy_key "${FC_DEPLOY_USER}@${{ secrets.FC_HOST }}" "
             docker login ghcr.io -u '${GHCR_USER}' --password-stdin &&
             export FC_IMAGE_TAG=${SHA_SHORT} &&
             export FC_IMAGE_REPOSITORY=${FC_IMAGE_REPOSITORY} &&
 
             docker pull ${FC_IMAGE_REPOSITORY}:${SHA_SHORT} &&
-            docker stack deploy --with-registry-auth -c /home/gh_docker_deploy/despliegue/docker-stack-catalog.yml federated-catalog
+            docker stack deploy --with-registry-auth -c /home/${FC_DEPLOY_USER}/deploy/docker-stack-catalog.yml federated-catalog
           "
