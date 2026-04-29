@@ -19,7 +19,7 @@ env:
   FC_IMAGE_REPOSITORY: ghcr.io/${{ github.repository_owner }}/federated-catalog
 
 jobs:
-  # ------------------------------
+  # -----------------------------
   # 1. BUILD & PUSH FC DOCKER IMAGE
   # ------------------------------
   build-and-push-fc:
